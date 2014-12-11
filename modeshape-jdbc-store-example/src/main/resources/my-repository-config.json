@@ -1,0 +1,31 @@
+{
+    "name" : "Persisted-Repository",
+    "workspaces" : {
+        "predefined" : ["otherWorkspace"],
+        "default" : "default",
+        "allowCreation" : true
+    },
+  "externalSources" : {
+    "downloads" : {
+      "classname" : "org.modeshape.connector.filesystem.FileSystemConnector",
+      "directoryPath" : "D:\Repo",
+      "readonly" : true,
+      "cacheTtlSeconds" : 5,
+      "projections" : [ "default:/downloads => /" ]
+    }},
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        }
+    },
+    "storage" : {
+        "cacheConfiguration" : "infinispan-configuration.xml",
+        "cacheName" : "persisted_repository",
+        "binaryStorage" : {
+            "type" : "file",
+            "directory": "target/content/binaries",
+            "minimumBinarySizeInBytes" : 999
+        }
+    },
+}
