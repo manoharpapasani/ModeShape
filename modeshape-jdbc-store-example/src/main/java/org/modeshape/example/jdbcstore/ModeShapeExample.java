@@ -36,6 +36,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
+import javax.jcr.version.VersionHistory;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -48,7 +49,7 @@ import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.query.QueryResult;
 
 public class ModeShapeExample {
-  private static Session session=null;
+	// private static Session session=null;
 	public static void main(String[] argv) {
 
 		Random rnd = new Random();
@@ -86,8 +87,9 @@ public class ModeShapeExample {
 			return;
 		}
 
-		//Session session = null;
+		Session session = null;
 		JcrTools tools = new JcrTools();
+		Node filesNode = null;
 		try {
 			// Get the repository
 			System.out.println("repositoryName::" + repositoryName);
@@ -99,30 +101,38 @@ public class ModeShapeExample {
 			// Create the '/files' node that is an 'nt:folder' ...
 			Node root = session.getRootNode();
 
-			Node filesNode = root.addNode("files", "nt:folder");
+			filesNode = root.addNode("files", "nt:folder");
+			System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,root>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			tools.printNode(root);
+			tools.printSubgraph(root);
 
 			InputStream stream = new BufferedInputStream(
 					new FileInputStream(
 							"C:\\Users\\ITON\\Pictures\\HelloWorldDemoPublicAccess.png"));
 
 			// Create an 'nt:file' node at the supplied path ...
-			Node fileNode = filesNode.addNode("HelloWorldDemoPublicAccess.png",
-					"nt:file");
-
+			Node fileNode = filesNode.addNode("HelloWorldDemoPublicAccess.png","nt:file");
+			fileNode.addMixin("mix:versionable");
+			System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,file node>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			tools.printNode(fileNode);
+			tools.printSubgraph(fileNode);
 			// Upload the file to that node ...
 			Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
+			tools.printNode(contentNode);
 			Binary binary = (Binary) session.getValueFactory().createBinary(
 					stream);
 			contentNode.setProperty("jcr:data", binary);
 
-			session.save();
-
+			
+			// Reading from a file
 			Node doc = session.getNode("/files/HelloWorldDemoPublicAccess.png");
 			Node imageContent = doc.getNode("jcr:content");
 			Binary content = (Binary) imageContent.getProperty("jcr:data")
 					.getBinary();
 			InputStream is = content.getStream();
-
+			System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,imageContent>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			tools.printNode(imageContent);
+			tools.printSubgraph(imageContent);
 			Image image = ImageIO.read(is);
 
 			JFrame frame = new JFrame();
@@ -130,8 +140,37 @@ public class ModeShapeExample {
 			frame.getContentPane().add(label, BorderLayout.CENTER);
 			frame.pack();
 			frame.setVisible(true);
-
+			//tools.printNode("fileNode--------------------"+fileNode);
+			//tools.printSubgraph("root--------------------"+root);
+			// Query Search
+			QueryManager queryManager = session.getWorkspace()
+					.getQueryManager();
+			System.out.println("QueryManager-------------"+queryManager);
+			// String sqlStatement =
+			// "SELECT [jcr:path] FROM [nt:resource] WHERE contains([nt:resource].[jcr:data],'ModeShape')";
+			String sqlStatement = "SELECT * FROM [nt:base] WHERE CONTAINS([nt:base],'files[40]')";
+			Query query = queryManager
+					.createQuery(sqlStatement, Query.JCR_SQL2);
+			// execute query and fetch result
+		    System.out.println("query----------"+query);
+			javax.jcr.query.QueryResult qResult = query.execute();
+            System.out.println(qResult.getColumnNames());
+			NodeIterator it1 = qResult.getNodes();
+            System.out.println(it1+">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			while(it1.hasNext()) {
+				Node findedNode = it1.nextNode();
+				System.out.println(findedNode.getName() + "---------------");
+			}
+			session.save();
+			
+			VersionHistory history =
+						session.getWorkspace().getVersionManager()
+						 .getVersionHistory(fileNode.getPath());
+			System.out.println("history------------"+history);
+			tools.printNode(root);
+			System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<root >>>>>>>>>>>>>>>>>>>>>>>>>>");
 			tools.printSubgraph(root);
+			
 			try {
 				// do something with the stream
 			} finally {
@@ -148,74 +187,5 @@ public class ModeShapeExample {
 			System.out.println("Exception" + e);
 			e.printStackTrace();
 		}
-		try {
-			// Get the repository
-			repository = engine.getRepository(repositoryName);
-
-			// Create a session ...
-			session = repository.login("default");
-
-			// Get the root node ...
-			Node root = session.getRootNode();
-			assert root != null;
-
-			System.out.println("Found the root node in the \""
-					+ session.getWorkspace().getName() + "\" workspace");
-
-			Node n = root.addNode("Node" + rnd.nextInt());
-
-			n.setProperty("key", "value");
-			n.setProperty(
-					"content",
-					session.getValueFactory().createBinary(
-							new ByteArrayInputStream(new byte[1000])));
-
-			session.save();
-
-			System.out.println("Added one node under root");
-			System.out.println("+ Root childs");
-
-			NodeIterator it = root.getNodes();
-			while (it.hasNext()) {
-				System.out.println("+---> " + it.nextNode().getName());
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (session != null)
-				session.logout();
-			System.out.println("Shutting down engine ...");
-			try {
-				engine.shutdown().get();
-				System.out.println("Success!");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		
-
 	}
-	public List getDatabases() throws RepositoryException {
-        // Obtain the query manager for the session ...
-		
-        QueryManager queryManager = session.getWorkspace().getQueryManager();
-
-        // Create a query object ...
-        Query query = queryManager.createQuery("SELECT * FROM [mj:table]"
-                , Query.JCR_SQL2);
-        // Execute the query and get the results ...
-        javax.jcr.query.QueryResult result = query.execute();
-
-        // Iterate over the nodes in the results ...
-        NodeIterator nodeIter = result.getNodes();
-
-        List stringResult = new ArrayList();
-        while (nodeIter.hasNext()) {
-            stringResult.add(nodeIter.nextNode().getName());
-        }
-
-        return stringResult;
-    }
 }

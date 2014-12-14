@@ -1,0 +1,23 @@
+{
+    "name" : "My Repository",
+    "workspaces" : {
+        "predefined" : ["w1"],
+        "allowCreation" : true
+    },
+    "storage" : {
+        "binaryStorage" : {
+            "type" : "file",
+            "directory": "/home/biton/Pictures/test",
+            "minimumBinarySizeInBytes" : 999
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        }
+    } 
+ 
+    }
+}
+
