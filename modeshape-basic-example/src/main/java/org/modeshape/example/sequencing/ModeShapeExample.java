@@ -101,14 +101,16 @@ public class ModeShapeExample {
 			System.out
 					.println("Stored some custom properties in json files, checkout the JCR_ROOT_VERSION"
 							+ filesNode.JCR_ROOT_VERSION + " folder");
+			
+			
 			InputStream stream = new BufferedInputStream(new FileInputStream(
 					"D:\\Desert.jpg"));
-			tools.printNode(filesNode);
+			//tools.printNode(filesNode);
 			System.out
 					.println("----------------------------------------------------------------");
 
 			// Create an 'nt:file' node at the supplied path ...
-			Node fileNode = filesNode.addNode("asdfg.jpg", "nt:file");
+			Node fileNode = filesNode.addNode("Desert.jpg", "nt:file");
 			fileNode.addMixin("mix:versionable");
 			System.out
 					.println("Stored some custom properties in json files, checkout the fileNode.getPath()"
@@ -151,7 +153,7 @@ public class ModeShapeExample {
 			// String sqlStatement =
 			// "SELECT [jcr:path] FROM [nt:resource] WHERE contains([nt:resource].[jcr:data],'ModeShape')";
 		//	String sqlStatement = "SELECT * FROM [nt:base] WHERE CONTAINS([nt:folder],'files')";
-			String sqlStatement = "SELECT * FROM [nt:base]  WHERE CONTAINS([nt:file],'asdfg.jpg') ";
+			String sqlStatement = "SELECT * FROM [nt:base]  WHERE CONTAINS([nt:folder],'Desert.jpg') ";
 			System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 			Query query = queryManager
 					.createQuery(sqlStatement, Query.JCR_SQL2);
@@ -183,7 +185,7 @@ public class ModeShapeExample {
 
 			}
 
-			Node doc = session.getNode("/files/asdfg.jpg");
+			Node doc = session.getNode("/files/Desert.jpg");
 			Node imageContent = doc.getNode("jcr:content");
 			Binary content = imageContent.getProperty("jcr:data").getBinary();
 			InputStream is = content.getStream();
